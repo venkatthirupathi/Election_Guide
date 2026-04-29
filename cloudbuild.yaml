@@ -1,0 +1,52 @@
+# Google Cloud Build — builds image and deploys to Cloud Run
+# Trigger: push to main branch  OR  manual: gcloud builds submit
+
+substitutions:
+  _SERVICE_NAME: election-guide
+  _REGION: asia-south1          # Mumbai — closest to Indian users
+  _IMAGE: gcr.io/$PROJECT_ID/${_SERVICE_NAME}
+
+steps:
+  # 1. Build the Docker image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE}:$SHORT_SHA
+      - -t
+      - ${_IMAGE}:latest
+      - .
+    id: build
+
+  # 2. Push both tags to Container Registry
+  - name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, ${_IMAGE}]
+    id: push
+    waitFor: [build]
+
+  # 3. Deploy to Cloud Run
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image=${_IMAGE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated        # public website
+      - --port=8080
+      - --min-instances=0              # scale to zero when idle (saves cost)
+      - --max-instances=10
+      - --memory=256Mi
+      - --cpu=1
+      - --concurrency=80
+    id: deploy
+    waitFor: [push]
+
+images:
+  - ${_IMAGE}:$SHORT_SHA
+  - ${_IMAGE}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

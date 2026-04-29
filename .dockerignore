@@ -1,0 +1,17 @@
+# Dev tools
+.claude/
+.git/
+.gitignore
+
+# Deployment scripts (not needed inside the image)
+deploy.sh
+cloudbuild.yaml
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (if ever added)
+node_modules/
+npm-debug.log
