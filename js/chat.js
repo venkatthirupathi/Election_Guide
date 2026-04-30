@@ -13,14 +13,18 @@ const Chat = (() => {
     const container = document.getElementById("chat-container");
     if (!container) return;
     container.innerHTML = `
-      <div class="chat-window">
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-suggestions" id="chat-suggestions"></div>
+      <div class="chat-window" role="region" aria-label="Election Assistant chat">
+        <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+        <div class="chat-suggestions" id="chat-suggestions" role="group" aria-label="Quick reply suggestions"></div>
         <div class="chat-input-row">
-          <input type="text" id="chat-input" placeholder="Ask anything about Indian elections…"
-                 onkeydown="if(event.key==='Enter') Chat.send()" autocomplete="off" />
-          <button class="chat-send-btn" onclick="Chat.send()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <label for="chat-input" class="sr-only">Ask a question about Indian elections</label>
+          <input type="text" id="chat-input"
+                 placeholder="Ask anything about Indian elections…"
+                 aria-label="Type your question about Indian elections"
+                 onkeydown="if(event.key==='Enter') Chat.send()"
+                 autocomplete="off" />
+          <button class="chat-send-btn" onclick="Chat.send()" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
             </svg>
@@ -38,6 +42,7 @@ const Chat = (() => {
     input.value = "";
     addUserMessage(text);
     hideSuggestions();
+    if (window.FirebaseService) window.FirebaseService.logChatQuery(text);
     showTypingIndicator();
     setTimeout(() => {
       removeTypingIndicator();

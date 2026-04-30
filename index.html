@@ -5,16 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>India Election Guide — Interactive Learning</title>
   <meta name="description" content="Interactive guide to India's election system — quizzes, flashcards, timelines and comprehensive learning modules.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- Google Analytics 4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ELECTIONIND1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-ELECTIONIND1', { anonymize_ip: true });
+  </script>
 </head>
 <body>
 <div id="app">
 
+  <!-- Skip Navigation (accessibility) -->
+  <a href="#main-content" class="skip-nav">Skip to main content</a>
+
   <!-- ─── NAVBAR ──────────────────────────────────────────────────────────── -->
-  <nav class="navbar">
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
     <div class="navbar-inner">
-      <div class="navbar-brand" onclick="App.navigate('home')">
-        <div class="brand-flag">
+      <div class="navbar-brand" onclick="App.navigate('home')" role="button"
+           tabindex="0" aria-label="India Election Guide — go to home"
+           onkeydown="if(event.key==='Enter'||event.key===' ')App.navigate('home')">
+        <div class="brand-flag" aria-hidden="true">
           <span class="f1"></span>
           <span class="f2"></span>
           <span class="f3"></span>
@@ -22,86 +42,91 @@
         <span>India Election Guide</span>
       </div>
 
-      <div class="nav-links">
-        <button class="nav-link active" data-page="home" onclick="App.navigate('home')">🏠 Home</button>
-        <button class="nav-link" data-page="learn" onclick="App.navigate('learn')">📖 Learn</button>
-        <button class="nav-link" data-page="quiz" onclick="App.navigate('quiz')">🧠 Quiz</button>
-        <button class="nav-link" data-page="flashcards" onclick="App.navigate('flashcards')">📚 Flashcards</button>
-        <button class="nav-link" data-page="timeline" onclick="App.navigate('timeline')">📅 Timeline</button>
-        <button class="nav-link" data-page="glossary" onclick="App.navigate('glossary')">📝 Glossary</button>
-        <button class="nav-link" data-page="chat" onclick="App.navigate('chat')">💬 Chat</button>
+      <div class="nav-links" role="menubar" aria-label="Site sections">
+        <button class="nav-link active" data-page="home"       role="menuitem" onclick="App.navigate('home')"       aria-label="Home page"       aria-current="page">🏠 Home</button>
+        <button class="nav-link"        data-page="learn"      role="menuitem" onclick="App.navigate('learn')"      aria-label="Learn section">📖 Learn</button>
+        <button class="nav-link"        data-page="quiz"       role="menuitem" onclick="App.navigate('quiz')"       aria-label="Quiz section">🧠 Quiz</button>
+        <button class="nav-link"        data-page="flashcards" role="menuitem" onclick="App.navigate('flashcards')" aria-label="Flashcards section">📚 Flashcards</button>
+        <button class="nav-link"        data-page="timeline"   role="menuitem" onclick="App.navigate('timeline')"   aria-label="Timeline section">📅 Timeline</button>
+        <button class="nav-link"        data-page="glossary"   role="menuitem" onclick="App.navigate('glossary')"   aria-label="Glossary section">📝 Glossary</button>
+        <button class="nav-link"        data-page="chat"       role="menuitem" onclick="App.navigate('chat')"       aria-label="Chat assistant">💬 Chat</button>
       </div>
 
-      <button class="mobile-toggle" id="mobile-toggle" aria-label="Menu">☰</button>
+      <button class="mobile-toggle" id="mobile-toggle"
+              aria-label="Toggle mobile menu" aria-expanded="false"
+              aria-controls="mobile-menu">☰</button>
     </div>
   </nav>
 
   <!-- Mobile Menu -->
-  <div class="mobile-menu hidden" id="mobile-menu">
-    <button class="nav-link" data-page="home" onclick="App.navigate('home')">🏠 Home</button>
-    <button class="nav-link" data-page="learn" onclick="App.navigate('learn')">📖 Learn</button>
-    <button class="nav-link" data-page="quiz" onclick="App.navigate('quiz')">🧠 Quiz</button>
-    <button class="nav-link" data-page="flashcards" onclick="App.navigate('flashcards')">📚 Flashcards</button>
-    <button class="nav-link" data-page="timeline" onclick="App.navigate('timeline')">📅 Timeline</button>
-    <button class="nav-link" data-page="glossary" onclick="App.navigate('glossary')">📝 Glossary</button>
-    <button class="nav-link" data-page="chat" onclick="App.navigate('chat')">💬 Chat</button>
+  <div class="mobile-menu hidden" id="mobile-menu" role="menu" aria-label="Mobile navigation">
+    <button class="nav-link" data-page="home"       role="menuitem" onclick="App.navigate('home')"       aria-label="Home page">🏠 Home</button>
+    <button class="nav-link" data-page="learn"      role="menuitem" onclick="App.navigate('learn')"      aria-label="Learn section">📖 Learn</button>
+    <button class="nav-link" data-page="quiz"       role="menuitem" onclick="App.navigate('quiz')"       aria-label="Quiz section">🧠 Quiz</button>
+    <button class="nav-link" data-page="flashcards" role="menuitem" onclick="App.navigate('flashcards')" aria-label="Flashcards section">📚 Flashcards</button>
+    <button class="nav-link" data-page="timeline"   role="menuitem" onclick="App.navigate('timeline')"   aria-label="Timeline section">📅 Timeline</button>
+    <button class="nav-link" data-page="glossary"   role="menuitem" onclick="App.navigate('glossary')"   aria-label="Glossary section">📝 Glossary</button>
+    <button class="nav-link" data-page="chat"       role="menuitem" onclick="App.navigate('chat')"       aria-label="Chat assistant">💬 Chat</button>
   </div>
 
   <!-- ─── MAIN CONTENT ─────────────────────────────────────────────────────── -->
-  <main class="main-content">
+  <main class="main-content" id="main-content" role="main" tabindex="-1">
+
+    <!-- Screen-reader live region for page changes -->
+    <div id="sr-announce" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     <!-- HOME PAGE -->
-    <div id="page-home">
+    <div id="page-home" role="region" aria-label="Home">
       <div id="home-content"></div>
     </div>
 
     <!-- LEARN PAGE -->
-    <div id="page-learn" class="page hidden">
+    <div id="page-learn" class="page hidden" role="region" aria-label="Learn">
       <div id="learn-content"></div>
     </div>
 
     <!-- TOPIC PAGE -->
-    <div id="page-topic" class="page hidden">
+    <div id="page-topic" class="page hidden" role="region" aria-label="Topic detail">
       <div id="topic-content"></div>
     </div>
 
     <!-- QUIZ PAGE -->
-    <div id="page-quiz" class="page hidden">
+    <div id="page-quiz" class="page hidden" role="region" aria-label="Quiz">
       <div class="page-header">
         <h1>🧠 Election Quiz</h1>
         <p>Test your knowledge of Indian elections — 10 questions, 30 seconds each</p>
       </div>
-      <div class="category-filter" id="quiz-categories"></div>
-      <div id="quiz-container"></div>
+      <div class="category-filter" id="quiz-categories" role="group" aria-label="Filter quiz by category"></div>
+      <div id="quiz-container" aria-live="polite" aria-atomic="false"></div>
     </div>
 
     <!-- FLASHCARDS PAGE -->
-    <div id="page-flashcards" class="page hidden">
+    <div id="page-flashcards" class="page hidden" role="region" aria-label="Flashcards">
       <div class="page-header">
         <h1>📚 Flashcards</h1>
         <p>Master key terms and concepts. Click a card to reveal the definition.</p>
       </div>
-      <div class="category-filter" id="fc-categories"></div>
-      <div id="fc-progress"></div>
-      <div id="flashcard-area"></div>
+      <div class="category-filter" id="fc-categories" role="group" aria-label="Filter flashcards by category"></div>
+      <div id="fc-progress" aria-live="polite" aria-label="Flashcard progress"></div>
+      <div id="flashcard-area" aria-live="polite"></div>
     </div>
 
     <!-- TIMELINE PAGE -->
-    <div id="page-timeline" class="page hidden">
+    <div id="page-timeline" class="page hidden" role="region" aria-label="Election timeline">
       <div id="timeline-content"></div>
     </div>
 
     <!-- GLOSSARY PAGE -->
-    <div id="page-glossary" class="page hidden">
+    <div id="page-glossary" class="page hidden" role="region" aria-label="Glossary">
       <div id="glossary-content"></div>
     </div>
 
     <!-- CHAT PAGE -->
-    <div id="page-chat" class="page hidden">
+    <div id="page-chat" class="page hidden" role="region" aria-label="Chat assistant">
       <div class="chat-page-header">
         <h1>💬 Election Assistant</h1>
         <p>Ask anything about the Indian election process — I'll explain it step by step.</p>
-        <button class="chat-clear-btn" onclick="Chat.clearChat()">🗑️ Clear Chat</button>
+        <button class="chat-clear-btn" onclick="Chat.clearChat()" aria-label="Clear chat history">🗑️ Clear Chat</button>
       </div>
       <div id="chat-container"></div>
     </div>
@@ -109,8 +134,8 @@
   </main>
 
   <!-- ─── FOOTER ───────────────────────────────────────────────────────────── -->
-  <footer>
-    <div class="footer-flag">
+  <footer role="contentinfo">
+    <div class="footer-flag" aria-label="Indian flag colours" aria-hidden="true">
       <span style="background:#FF9933; width:20px; height:4px; border-radius:1px; display:inline-block"></span>
       <span style="background:#fff; width:20px; height:4px; border-radius:1px; display:inline-block"></span>
       <span style="background:#138808; width:20px; height:4px; border-radius:1px; display:inline-block"></span>
@@ -124,12 +149,16 @@
 </div>
 
 <!-- Scripts — load in dependency order -->
+<script src="js/storage.js"></script>
 <script src="js/data.js"></script>
 <script src="js/chatdata.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/flashcard.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/app.js"></script>
+
+<!-- Firebase (module — loads after page scripts) -->
+<script type="module" src="js/firebase.js"></script>
 
 </body>
 </html>

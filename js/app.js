@@ -5,6 +5,15 @@ const App = (() => {
 
   const pages = ["home", "learn", "topic", "quiz", "flashcards", "timeline", "glossary", "chat"];
 
+  // Debounce helper for search inputs
+  function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  }
+
   function init() {
     navigate("home");
     setupMobileMenu();
@@ -13,69 +22,88 @@ const App = (() => {
   function navigate(page, param = null) {
     currentPage = page;
 
-    // Hide all pages
     pages.forEach(p => {
       const el = document.getElementById(`page-${p}`);
       if (el) el.classList.add("hidden");
     });
 
-    // Update nav active state
     document.querySelectorAll(".nav-link").forEach(el => {
-      el.classList.toggle("active", el.dataset.page === page);
+      const isActive = el.dataset.page === page;
+      el.classList.toggle("active", isActive);
+      el.setAttribute("aria-current", isActive ? "page" : "false");
     });
 
-    // Show current page
     const target = document.getElementById(`page-${page}`);
     if (target) {
       target.classList.remove("hidden");
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // Initialize page
-    if (page === "home") renderHome();
+    // Announce page change to screen readers
+    const announcer = document.getElementById("sr-announce");
+    if (announcer) {
+      const labels = {
+        home: "Home page", learn: "Learn section", quiz: "Quiz section",
+        flashcards: "Flashcards section", timeline: "Timeline section",
+        glossary: "Glossary section", chat: "Chat assistant", topic: "Topic detail"
+      };
+      announcer.textContent = `Navigated to ${labels[page] || page}`;
+    }
+
+    if (page === "home")       renderHome();
     else if (page === "learn") renderLearn();
     else if (page === "topic") renderTopic(param);
-    else if (page === "quiz") Quiz.init();
+    else if (page === "quiz")  Quiz.init();
     else if (page === "flashcards") Flashcard.init();
-    else if (page === "timeline") renderTimeline();
-    else if (page === "glossary") renderGlossary();
-    else if (page === "chat") Chat.init();
+    else if (page === "timeline")   renderTimeline();
+    else if (page === "glossary")   renderGlossary();
+    else if (page === "chat")       Chat.init();
 
-    // Close mobile menu
     document.getElementById("mobile-menu")?.classList.add("hidden");
+
+    // Log page view to Firebase Analytics
+    if (window.FirebaseService) {
+      window.FirebaseService.logPageView(page);
+    }
   }
 
   function renderHome() {
     const container = document.getElementById("home-content");
     if (!container) return;
 
+    const best = window.Storage?.getBestScore() || null;
+    const bestBadge = best
+      ? `<div class="best-score-badge" aria-label="Your best quiz score is ${best.percentage}%">🏆 Your Best: ${best.percentage}% (${best.category})</div>`
+      : "";
+
     container.innerHTML = `
       <!-- Hero Section -->
-      <section class="hero">
-        <div class="hero-bg"></div>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-bg" aria-hidden="true"></div>
         <div class="hero-content">
-          <div class="hero-badge">🇮🇳 Indian Democracy</div>
-          <h1 class="hero-title">Understand India's<br><span class="hero-highlight">Election System</span></h1>
+          <div class="hero-badge" aria-label="About this guide">🇮🇳 Indian Democracy</div>
+          ${bestBadge}
+          <h1 class="hero-title" id="hero-title">Understand India's<br><span class="hero-highlight">Election System</span></h1>
           <p class="hero-subtitle">Interactive learning platform for Indian elections — quizzes, flashcards, timelines, and comprehensive guides.</p>
           <div class="hero-cta">
-            <button class="btn-hero-primary" onclick="App.navigate('learn')">Start Learning →</button>
-            <button class="btn-hero-secondary" onclick="App.navigate('quiz')">Take a Quiz 🧠</button>
+            <button class="btn-hero-primary" onclick="App.navigate('learn')" aria-label="Start learning about Indian elections">Start Learning →</button>
+            <button class="btn-hero-secondary" onclick="App.navigate('quiz')" aria-label="Take an election knowledge quiz">Take a Quiz 🧠</button>
           </div>
         </div>
-        <div class="hero-stats">
-          <div class="hero-stat">
+        <div class="hero-stats" role="list" aria-label="Key statistics about Indian elections">
+          <div class="hero-stat" role="listitem">
             <span class="stat-number">969M+</span>
             <span class="stat-label">Eligible Voters (2024)</span>
           </div>
-          <div class="hero-stat">
+          <div class="hero-stat" role="listitem">
             <span class="stat-number">543</span>
             <span class="stat-label">Lok Sabha Seats</span>
           </div>
-          <div class="hero-stat">
+          <div class="hero-stat" role="listitem">
             <span class="stat-number">1951</span>
             <span class="stat-label">First General Election</span>
           </div>
-          <div class="hero-stat">
+          <div class="hero-stat" role="listitem">
             <span class="stat-number">75+</span>
             <span class="stat-label">Years of Democracy</span>
           </div>
@@ -83,35 +111,40 @@ const App = (() => {
       </section>
 
       <!-- Feature Cards -->
-      <section class="features-section">
-        <h2 class="section-title">What You'll Learn</h2>
-        <div class="features-grid">
-          <div class="feature-card" onclick="App.navigate('learn')">
-            <div class="feature-icon">📖</div>
+      <section class="features-section" aria-labelledby="features-title">
+        <h2 class="section-title" id="features-title">What You'll Learn</h2>
+        <div class="features-grid" role="list">
+          <div class="feature-card" role="listitem" onclick="App.navigate('learn')" tabindex="0"
+               aria-label="Topic Guides — 6 topics" onkeydown="if(event.key==='Enter')App.navigate('learn')">
+            <div class="feature-icon" aria-hidden="true">📖</div>
             <h3>Topic Guides</h3>
             <p>Deep-dive into ECI, election types, voting process, parties, and more.</p>
             <span class="feature-count">6 Topics</span>
           </div>
-          <div class="feature-card" onclick="App.navigate('quiz')">
-            <div class="feature-icon">🧠</div>
+          <div class="feature-card" role="listitem" onclick="App.navigate('quiz')" tabindex="0"
+               aria-label="Interactive Quiz — 25 questions" onkeydown="if(event.key==='Enter')App.navigate('quiz')">
+            <div class="feature-icon" aria-hidden="true">🧠</div>
             <h3>Interactive Quiz</h3>
             <p>Test your knowledge with 25 questions across 8 categories. Timed challenges!</p>
             <span class="feature-count">25 Questions</span>
           </div>
-          <div class="feature-card" onclick="App.navigate('flashcards')">
-            <div class="feature-icon">📚</div>
+          <div class="feature-card" role="listitem" onclick="App.navigate('flashcards')" tabindex="0"
+               aria-label="Flashcards — 20 cards" onkeydown="if(event.key==='Enter')App.navigate('flashcards')">
+            <div class="feature-icon" aria-hidden="true">📚</div>
             <h3>Flashcards</h3>
             <p>Study key terms with interactive flip cards. Track your mastery progress.</p>
             <span class="feature-count">20 Cards</span>
           </div>
-          <div class="feature-card" onclick="App.navigate('timeline')">
-            <div class="feature-icon">📅</div>
+          <div class="feature-card" role="listitem" onclick="App.navigate('timeline')" tabindex="0"
+               aria-label="Election Timeline — 13 events" onkeydown="if(event.key==='Enter')App.navigate('timeline')">
+            <div class="feature-icon" aria-hidden="true">📅</div>
             <h3>Election Timeline</h3>
             <p>Explore 75 years of Indian election history with key milestones.</p>
             <span class="feature-count">13 Events</span>
           </div>
-          <div class="feature-card" onclick="App.navigate('glossary')">
-            <div class="feature-icon">📝</div>
+          <div class="feature-card" role="listitem" onclick="App.navigate('glossary')" tabindex="0"
+               aria-label="Glossary — 25 plus terms" onkeydown="if(event.key==='Enter')App.navigate('glossary')">
+            <div class="feature-icon" aria-hidden="true">📝</div>
             <h3>Glossary</h3>
             <p>Searchable dictionary of 25+ election terms and concepts.</p>
             <span class="feature-count">25+ Terms</span>
@@ -120,34 +153,37 @@ const App = (() => {
       </section>
 
       <!-- Quick Topics -->
-      <section class="quick-topics">
-        <h2 class="section-title">Browse Topics</h2>
-        <div class="topics-grid">
+      <section class="quick-topics" aria-labelledby="topics-title">
+        <h2 class="section-title" id="topics-title">Browse Topics</h2>
+        <div class="topics-grid" role="list">
           ${topicsData.map(t => `
-            <div class="topic-card" onclick="App.navigate('topic', '${t.id}')" style="--topic-color: ${t.color}">
-              <div class="topic-icon">${t.icon}</div>
+            <div class="topic-card" role="listitem" onclick="App.navigate('topic', '${t.id}')"
+                 tabindex="0" style="--topic-color: ${t.color}"
+                 aria-label="${t.title} — ${t.summary}"
+                 onkeydown="if(event.key==='Enter')App.navigate('topic','${t.id}')">
+              <div class="topic-icon" aria-hidden="true">${t.icon}</div>
               <div class="topic-info">
                 <h4>${t.title}</h4>
                 <p>${t.summary}</p>
               </div>
-              <span class="topic-arrow">→</span>
+              <span class="topic-arrow" aria-hidden="true">→</span>
             </div>
           `).join("")}
         </div>
       </section>
 
       <!-- Did You Know -->
-      <section class="did-you-know">
-        <h2 class="section-title">Did You Know?</h2>
-        <div class="facts-carousel" id="facts-carousel">
+      <section class="did-you-know" aria-labelledby="facts-title">
+        <h2 class="section-title" id="facts-title">Did You Know?</h2>
+        <div class="facts-carousel" id="facts-carousel" aria-live="polite" aria-atomic="true">
           ${getRandomFacts().map((f, i) => `
-            <div class="fact-card ${i === 0 ? "active" : ""}">
-              <div class="fact-icon">${f.icon}</div>
+            <div class="fact-card ${i === 0 ? "active" : ""}" role="article">
+              <div class="fact-icon" aria-hidden="true">${f.icon}</div>
               <p>${f.text}</p>
             </div>
           `).join("")}
         </div>
-        <div class="fact-dots" id="fact-dots"></div>
+        <div class="fact-dots" id="fact-dots" role="tablist" aria-label="Fact navigation"></div>
       </section>
     `;
 
@@ -160,7 +196,7 @@ const App = (() => {
       { icon: "🖥️", text: "India was the first country to use Electronic Voting Machines (EVMs) on a national scale, beginning a complete transition in 2004." },
       { icon: "⚖️", text: "The Election Commission of India is one of the most respected independent bodies in the country, feared by political parties for its strict enforcement." },
       { icon: "📜", text: "India's first election in 1951-52 took almost 4 months to complete because printing ballot papers for 173 million voters was a massive logistical challenge." },
-      { icon: "🎨", text: "India uses indelible ink (Indelible Electoral Ink, containing silver nitrate) on voters' fingers — the formula was originally developed in Mysore, Karnataka." },
+      { icon: "🎨", text: "India uses indelible ink (containing silver nitrate) on voters' fingers — the formula was originally developed in Mysore, Karnataka." },
       { icon: "🌐", text: "India has 543 Lok Sabha constituencies, each representing roughly 1.5 to 2 million people — larger than many countries' total populations." }
     ];
   }
@@ -172,9 +208,13 @@ const App = (() => {
 
     let active = 0;
     dotsContainer.innerHTML = [...cards].map((_, i) =>
-      `<span class="fact-dot ${i === 0 ? "active" : ""}" onclick="App.goToFact(${i})"></span>`
+      `<span class="fact-dot ${i === 0 ? "active" : ""}" role="tab"
+             aria-label="Fact ${i + 1}" aria-selected="${i === 0}"
+             tabindex="0" onclick="App.goToFact(${i})"
+             onkeydown="if(event.key==='Enter')App.goToFact(${i})"></span>`
     ).join("");
 
+    clearInterval(window._factInterval);
     window._factInterval = setInterval(() => {
       active = (active + 1) % cards.length;
       goToFact(active);
@@ -183,7 +223,10 @@ const App = (() => {
 
   function goToFact(index) {
     document.querySelectorAll(".fact-card").forEach((el, i) => el.classList.toggle("active", i === index));
-    document.querySelectorAll(".fact-dot").forEach((el, i) => el.classList.toggle("active", i === index));
+    document.querySelectorAll(".fact-dot").forEach((el, i) => {
+      el.classList.toggle("active", i === index);
+      el.setAttribute("aria-selected", i === index ? "true" : "false");
+    });
   }
 
   function renderLearn() {
@@ -195,17 +238,19 @@ const App = (() => {
         <h1>Learn About Indian Elections</h1>
         <p>Comprehensive guides covering every aspect of India's electoral system</p>
       </div>
-      <div class="learn-grid">
+      <div class="learn-grid" role="list">
         ${topicsData.map(t => `
-          <div class="learn-card" onclick="App.navigate('topic', '${t.id}')">
-            <div class="learn-card-header" style="background: ${t.color}">
+          <div class="learn-card" role="listitem" onclick="App.navigate('topic', '${t.id}')"
+               tabindex="0" aria-label="Read about ${t.title}"
+               onkeydown="if(event.key==='Enter')App.navigate('topic','${t.id}')">
+            <div class="learn-card-header" style="background: ${t.color}" aria-hidden="true">
               <span class="learn-icon">${t.icon}</span>
             </div>
             <div class="learn-card-body">
               <h3>${t.title}</h3>
               <p>${t.summary}</p>
               <div class="learn-sections">${t.content.length} sections</div>
-              <button class="btn-read">Read →</button>
+              <button class="btn-read" aria-label="Read ${t.title}">Read →</button>
             </div>
           </div>
         `).join("")}
@@ -220,31 +265,31 @@ const App = (() => {
 
     container.innerHTML = `
       <div class="topic-page">
-        <div class="topic-breadcrumb">
-          <button onclick="App.navigate('learn')" class="breadcrumb-link">← Back to Topics</button>
-        </div>
-        <div class="topic-header" style="background: linear-gradient(135deg, ${topic.color}22, ${topic.color}11); border-left: 4px solid ${topic.color}">
-          <span class="topic-header-icon">${topic.icon}</span>
+        <nav class="topic-breadcrumb" aria-label="Breadcrumb">
+          <button onclick="App.navigate('learn')" class="breadcrumb-link" aria-label="Back to all topics">← Back to Topics</button>
+        </nav>
+        <header class="topic-header" style="background: linear-gradient(135deg, ${topic.color}22, ${topic.color}11); border-left: 4px solid ${topic.color}">
+          <span class="topic-header-icon" aria-hidden="true">${topic.icon}</span>
           <div>
             <h1>${topic.title}</h1>
             <p>${topic.summary}</p>
           </div>
-        </div>
-        <div class="topic-sections">
+        </header>
+        <div class="topic-sections" role="list">
           ${topic.content.map((section, i) => `
-            <div class="topic-section">
-              <div class="section-number" style="background: ${topic.color}">${i + 1}</div>
+            <article class="topic-section" role="listitem">
+              <div class="section-number" style="background: ${topic.color}" aria-label="Section ${i + 1}">${i + 1}</div>
               <div class="section-body">
                 <h3>${section.heading}</h3>
                 <p>${section.text.replace(/\n/g, "<br>")}</p>
               </div>
-            </div>
+            </article>
           `).join("")}
         </div>
-        <div class="topic-footer">
-          <button class="btn-primary" onclick="App.navigate('quiz')">Test Your Knowledge 🧠</button>
-          <button class="btn-secondary" onclick="App.navigate('flashcards')">Study Flashcards 📚</button>
-        </div>
+        <footer class="topic-footer">
+          <button class="btn-primary" onclick="App.navigate('quiz')" aria-label="Test your knowledge with a quiz">Test Your Knowledge 🧠</button>
+          <button class="btn-secondary" onclick="App.navigate('flashcards')" aria-label="Study with flashcards">Study Flashcards 📚</button>
+        </footer>
       </div>
     `;
   }
@@ -254,22 +299,22 @@ const App = (() => {
     if (!container) return;
 
     container.innerHTML = `
-      <div class="timeline-header">
+      <header class="timeline-header">
         <h1>India's Election History</h1>
         <p>Key milestones in 75+ years of democratic elections</p>
-      </div>
-      <div class="timeline">
+      </header>
+      <ol class="timeline" aria-label="Election timeline">
         ${timelineData.map((event, i) => `
-          <div class="timeline-item ${i % 2 === 0 ? "left" : "right"}">
-            <div class="timeline-dot">${event.icon}</div>
-            <div class="timeline-card">
-              <div class="timeline-year">${event.year}</div>
+          <li class="timeline-item ${i % 2 === 0 ? "left" : "right"}">
+            <div class="timeline-dot" aria-hidden="true">${event.icon}</div>
+            <article class="timeline-card">
+              <time class="timeline-year" datetime="${event.year}">${event.year}</time>
               <h3>${event.event}</h3>
               <p>${event.detail}</p>
-            </div>
-          </div>
+            </article>
+          </li>
         `).join("")}
-      </div>
+      </ol>
     `;
   }
 
@@ -278,17 +323,28 @@ const App = (() => {
     if (!container) return;
 
     container.innerHTML = `
-      <div class="glossary-header">
+      <header class="glossary-header">
         <h1>Election Glossary</h1>
         <p>Key terms and concepts in Indian elections</p>
         <div class="glossary-search">
-          <input type="text" id="glossary-input" placeholder="🔍 Search terms..." oninput="App.filterGlossary()" class="search-input">
+          <label for="glossary-input" class="sr-only">Search election terms</label>
+          <input type="search" id="glossary-input"
+                 placeholder="🔍 Search terms…"
+                 aria-label="Search election terms"
+                 class="search-input"
+                 autocomplete="off">
         </div>
-      </div>
-      <div class="glossary-list" id="glossary-list">
+      </header>
+      <div class="glossary-list" id="glossary-list" role="list" aria-live="polite" aria-label="Glossary terms">
         ${renderGlossaryItems(glossaryData)}
       </div>
     `;
+
+    // Debounced search — fires 250ms after user stops typing
+    const input = document.getElementById("glossary-input");
+    if (input) {
+      input.addEventListener("input", debounce(filterGlossary, 250));
+    }
   }
 
   function renderGlossaryItems(items) {
@@ -300,14 +356,16 @@ const App = (() => {
     });
 
     return Object.keys(grouped).sort().map(letter => `
-      <div class="glossary-group">
-        <div class="glossary-letter">${letter}</div>
-        ${grouped[letter].map(item => `
-          <div class="glossary-item">
-            <dt>${item.term}</dt>
-            <dd>${item.definition}</dd>
-          </div>
-        `).join("")}
+      <div class="glossary-group" role="listitem">
+        <div class="glossary-letter" role="heading" aria-level="3">${letter}</div>
+        <dl>
+          ${grouped[letter].map(item => `
+            <div class="glossary-item">
+              <dt>${item.term}</dt>
+              <dd>${item.definition}</dd>
+            </div>
+          `).join("")}
+        </dl>
       </div>
     `).join("");
   }
@@ -318,16 +376,23 @@ const App = (() => {
       item.term.toLowerCase().includes(query) || item.definition.toLowerCase().includes(query)
     );
     const container = document.getElementById("glossary-list");
-    if (container) container.innerHTML = filtered.length
+    if (!container) return;
+
+    const count = filtered.length;
+    container.setAttribute("aria-label", `${count} glossary term${count !== 1 ? "s" : ""} found`);
+    container.innerHTML = count
       ? renderGlossaryItems(filtered)
-      : `<p class="no-results">No terms found for "${query}"</p>`;
+      : `<p class="no-results" role="status">No terms found for "<em>${query}</em>"</p>`;
   }
 
   function setupMobileMenu() {
     const toggle = document.getElementById("mobile-toggle");
     const menu = document.getElementById("mobile-menu");
     if (toggle && menu) {
-      toggle.addEventListener("click", () => menu.classList.toggle("hidden"));
+      toggle.addEventListener("click", () => {
+        const isHidden = menu.classList.toggle("hidden");
+        toggle.setAttribute("aria-expanded", String(!isHidden));
+      });
     }
   }
 

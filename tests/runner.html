@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Guide — Test Runner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f1a; color: #e2e8f0;
+      padding: 32px 20px; line-height: 1.6;
+    }
+    header { max-width: 900px; margin: 0 auto 32px; }
+    header h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 4px; }
+    header p { color: #94a3b8; font-size: 0.9rem; }
+
+    #test-summary { max-width: 900px; margin: 0 auto 24px; }
+    .summary-box { padding: 20px 24px; border-radius: 12px; text-align: center; }
+    .all-pass { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.4); }
+    .has-fail  { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.4); }
+    .summary-box h2 { font-size: 1.3rem; margin-bottom: 4px; }
+    .summary-box p { color: #94a3b8; font-size: 0.95rem; }
+
+    #test-output { max-width: 900px; margin: 0 auto; }
+    #test-output h3 {
+      font-size: 1rem; font-weight: 700; padding: 12px 0 6px;
+      border-bottom: 1px solid #2d2d4e; margin: 16px 0 8px;
+      color: #6366f1;
+    }
+    .test-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 7px 12px; border-radius: 6px; font-size: 0.85rem;
+      margin-bottom: 2px;
+    }
+    .test-row.pass { background: rgba(16,185,129,0.06); }
+    .test-row.fail { background: rgba(239,68,68,0.1); }
+    .status { flex-shrink: 0; width: 20px; }
+    .desc { flex: 1; }
+    .detail { color: #f87171; font-size: 0.78rem; font-family: monospace; margin-top: 2px; display: block; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧪 Election Guide — Test Suite</h1>
+    <p>Unit and integration tests for all core modules</p>
+  </header>
+
+  <div id="test-summary"><p style="color:#94a3b8; text-align:center">Running tests…</p></div>
+  <div id="test-output"></div>
+
+  <!-- Load all data and module dependencies in order -->
+  <script src="../js/data.js"></script>
+  <script src="../js/chatdata.js"></script>
+  <script src="../js/storage.js"></script>
+
+  <!-- Run the test suite -->
+  <script src="tests.js"></script>
+</body>
+</html>

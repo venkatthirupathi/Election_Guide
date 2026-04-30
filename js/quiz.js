@@ -55,30 +55,33 @@ const Quiz = (() => {
 
     container.innerHTML = `
       <div class="quiz-header">
-        <div class="quiz-progress-bar">
+        <div class="quiz-progress-bar" role="progressbar"
+             aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Quiz progress: question ${current + 1} of ${questions.length}">
           <div class="quiz-progress-fill" style="width: ${progress}%"></div>
         </div>
         <div class="quiz-meta">
-          <span class="quiz-counter">Question ${current + 1} of ${questions.length}</span>
-          <span class="quiz-score-live">Score: ${score}</span>
-          <span class="quiz-timer" id="quiz-timer">⏱️ ${timeLeft}s</span>
+          <span class="quiz-counter" aria-live="polite">Question ${current + 1} of ${questions.length}</span>
+          <span class="quiz-score-live" aria-live="polite" aria-label="Current score: ${score}">Score: ${score}</span>
+          <span class="quiz-timer" id="quiz-timer" aria-live="polite" aria-label="Time remaining: ${timeLeft} seconds">⏱️ ${timeLeft}s</span>
         </div>
-        <div class="quiz-category-tag">${q.category}</div>
+        <div class="quiz-category-tag" aria-label="Category: ${q.category}">${q.category}</div>
       </div>
 
-      <div class="quiz-question-card">
-        <h2 class="quiz-question">${q.question}</h2>
-        <div class="quiz-options" id="quiz-options">
+      <div class="quiz-question-card" role="form" aria-label="Quiz question ${current + 1}">
+        <h2 class="quiz-question" id="quiz-q-label">${q.question}</h2>
+        <div class="quiz-options" id="quiz-options" role="group" aria-labelledby="quiz-q-label">
           ${q.options.map((opt, i) => `
-            <button class="quiz-option" onclick="Quiz.selectAnswer(${i})" data-index="${i}">
-              <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+            <button class="quiz-option" onclick="Quiz.selectAnswer(${i})" data-index="${i}"
+                    aria-label="Option ${String.fromCharCode(65 + i)}: ${opt}">
+              <span class="option-letter" aria-hidden="true">${String.fromCharCode(65 + i)}</span>
               <span class="option-text">${opt}</span>
             </button>
           `).join("")}
         </div>
-        <div class="quiz-explanation hidden" id="quiz-explanation"></div>
+        <div class="quiz-explanation hidden" id="quiz-explanation" aria-live="polite"></div>
         <div class="quiz-nav hidden" id="quiz-nav">
-          <button class="btn-primary" onclick="Quiz.nextQuestion()">
+          <button class="btn-primary" onclick="Quiz.nextQuestion()" aria-label="${current + 1 === questions.length ? "See your results" : "Go to next question"}">
             ${current + 1 === questions.length ? "See Results 🏆" : "Next Question →"}
           </button>
         </div>
@@ -165,6 +168,15 @@ const Quiz = (() => {
     const percentage = Math.round((score / questions.length) * 100);
     const grade = percentage >= 90 ? "🏆 Expert" : percentage >= 70 ? "🎖️ Proficient" : percentage >= 50 ? "📚 Learning" : "🌱 Beginner";
     const gradeColor = percentage >= 90 ? "#10b981" : percentage >= 70 ? "#3b82f6" : percentage >= 50 ? "#f59e0b" : "#ef4444";
+
+    // Persist score locally and log to Firebase
+    if (window.Storage) {
+      window.Storage.saveQuizScore(score, questions.length, selectedCategory);
+    }
+    if (window.FirebaseService) {
+      window.FirebaseService.logQuizComplete(score, questions.length, selectedCategory);
+      window.FirebaseService.saveQuizScore(score, questions.length, selectedCategory);
+    }
 
     container.innerHTML = `
       <div class="quiz-results">

@@ -117,9 +117,16 @@ const Flashcard = (() => {
     }
   }
 
+  function persistProgress() {
+    if (window.Storage) {
+      window.Storage.saveFlashcardProgress(selectedCategory, known.size, studying.size, cards.length);
+    }
+  }
+
   function markKnown() {
     known.add(current);
     studying.delete(current);
+    persistProgress();
     renderCard();
     if (current < cards.length - 1) {
       setTimeout(() => { current++; renderCard(); }, 400);
@@ -129,6 +136,7 @@ const Flashcard = (() => {
   function markStudying() {
     studying.add(current);
     known.delete(current);
+    persistProgress();
     renderCard();
     if (current < cards.length - 1) {
       setTimeout(() => { current++; renderCard(); }, 400);
@@ -176,6 +184,11 @@ const Flashcard = (() => {
     const knownCount = known.size;
     const studyCount = studying.size;
     const total = cards.length;
+
+    // Log session to Firebase Analytics
+    if (window.FirebaseService) {
+      window.FirebaseService.logFlashcardSession(knownCount, total);
+    }
 
     container.innerHTML = `
       <div class="fc-complete">
