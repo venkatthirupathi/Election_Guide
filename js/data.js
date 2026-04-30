@@ -529,6 +529,8 @@ const glossaryData = [
   { term: "Tenth Schedule", definition: "Constitutional provisions related to disqualification of members on grounds of defection (Anti-Defection Law)." },
   { term: "Upchunav", definition: "Hindi term for By-Election — election held to fill a vacancy in a constituency." },
   { term: "Vote on Account", definition: "A special provision allowing the government to draw money from the Consolidated Fund for a few months during election year before full budget is passed." },
+  { term: "Electronic Voting Machine (EVM)", definition: "A tamper-proof electronic device used to record votes in Indian elections. India began using EVMs in 1982 and completed the nationwide transition by 2004, replacing paper ballots entirely." },
+  { term: "NOTA (None Of The Above)", definition: "An option on the ballot that allows voters to reject all candidates. Introduced in 2013 following a Supreme Court directive, NOTA lets voters express dissatisfaction without choosing any candidate." },
   { term: "Whip", definition: "An official of a political party in a legislature whose job is to ensure party members vote as directed. Also refers to the directive itself." },
   { term: "Zero Hour", definition: "A parliamentary procedure where members can raise matters without prior notice immediately after question hour (12:00 noon)." }
 ];
