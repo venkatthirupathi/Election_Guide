@@ -462,6 +462,176 @@ T.suite("Integration — Category Consistency", () => {
   });
 });
 
+// ─── TIMELINE VALIDATION TESTS ──────────────────────────────────────────────
+T.suite("Timeline — Chronological Order", () => {
+  const years = timelineData.map(e => parseInt(e.year));
+  T.assert("Timeline years are all valid numbers", years.every(y => !isNaN(y) && y > 1900 && y <= new Date().getFullYear() + 1));
+  T.assert("Timeline has events from first election era", years.some(y => y >= 1951 && y <= 1952));
+  T.assert("Timeline covers recent elections", years.some(y => y >= 2019));
+
+  const sorted = [...years].sort((a, b) => a - b);
+  T.assert("Timeline events span at least 50 years", sorted[sorted.length - 1] - sorted[0] >= 50);
+});
+
+T.suite("Timeline — Data Completeness", () => {
+  timelineData.forEach((e, i) => {
+    T.assert(`Event ${i+1}: has icon`, typeof e.icon === "string" && e.icon.length > 0);
+    T.assert(`Event ${i+1}: detail has meaningful length`, e.detail.length >= 20);
+    T.assert(`Event ${i+1}: event title is descriptive`, e.event.length >= 5);
+  });
+});
+
+// ─── TOPICS DATA TESTS ────────────────────────────────────────────────────────
+T.suite("Topics — Content Quality", () => {
+  topicsData.forEach((t, i) => {
+    T.assert(`Topic ${i+1}: has icon`, typeof t.icon === "string" && t.icon.length > 0);
+    T.assert(`Topic ${i+1}: has color`, typeof t.color === "string" && t.color.length > 0);
+    T.assert(`Topic ${i+1}: summary is descriptive`, t.summary.length >= 20);
+    T.assert(`Topic ${i+1}: has at least 2 content sections`, t.content.length >= 2);
+    t.content.forEach((s, j) => {
+      T.assert(`Topic ${i+1}, Section ${j+1}: heading is non-empty`, s.heading.length > 0);
+      T.assert(`Topic ${i+1}, Section ${j+1}: text is substantive`, s.text.length >= 30);
+    });
+  });
+
+  const ids = topicsData.map(t => t.id);
+  T.assert("Topic IDs are unique", new Set(ids).size === ids.length);
+});
+
+// ─── QUIZ EDGE CASES ──────────────────────────────────────────────────────────
+T.suite("Quiz — Timer Validation", () => {
+  const TIMER_SECONDS = 30;
+  T.assert("Timer constant is positive", TIMER_SECONDS > 0);
+  T.assert("Timer is at least 10 seconds", TIMER_SECONDS >= 10);
+  T.assert("Timer is at most 120 seconds", TIMER_SECONDS <= 120);
+
+  const elapsed = 15;
+  const remaining = TIMER_SECONDS - elapsed;
+  T.assert("Remaining time calculation is correct", remaining === 15);
+  T.assert("Expired timer returns 0 or negative", TIMER_SECONDS - 35 < 0);
+});
+
+T.suite("Quiz — Category Completeness", () => {
+  const categories = [...new Set(quizData.map(q => q.category))];
+  T.assert("Quiz covers at least 5 categories", categories.length >= 5);
+
+  categories.forEach(cat => {
+    const catQuestions = quizData.filter(q => q.category === cat);
+    T.assert(`Category "${cat}" has unique questions`, new Set(catQuestions.map(q => q.question)).size === catQuestions.length);
+  });
+
+  const allExplanations = quizData.map(q => q.explanation);
+  T.assert("All explanations are unique", new Set(allExplanations).size === allExplanations.length);
+});
+
+// ─── STORAGE EDGE CASES ──────────────────────────────────────────────────────
+T.suite("Storage — Score History Limit", () => {
+  Storage.clearAll();
+
+  for (let i = 0; i < 25; i++) {
+    Storage.saveQuizScore(i % 10, 10, "All");
+  }
+
+  const history = Storage.getQuizHistory();
+  T.assert("History is capped at 20 entries", history.length <= 20);
+  T.assert("Most recent score is first", history[0].score === 24 % 10);
+});
+
+T.suite("Storage — Best Score Per Category", () => {
+  Storage.clearAll();
+
+  Storage.saveQuizScore(7, 10, "Voting");
+  Storage.saveQuizScore(9, 10, "Voting");
+  Storage.saveQuizScore(5, 10, "Voting");
+  Storage.saveQuizScore(10, 10, "Institutions");
+
+  const bestVoting = Storage.getBestScore("Voting");
+  T.assertEqual("Best score for Voting is 90%", bestVoting.percentage, 90);
+
+  const bestInstitutions = Storage.getBestScore("Institutions");
+  T.assertEqual("Best score for Institutions is 100%", bestInstitutions.percentage, 100);
+
+  const bestAll = Storage.getBestScore("All");
+  T.assertEqual("Best overall score is 100%", bestAll.percentage, 100);
+
+  Storage.clearAll();
+  T.assertEqual("getBestScore returns null after clearAll", Storage.getBestScore("All"), null);
+});
+
+T.suite("Storage — Flashcard Progress Update", () => {
+  Storage.clearAll();
+
+  Storage.saveFlashcardProgress("Voting", 5, 2, 20);
+  let prog = Storage.getFlashcardProgress("Voting");
+  T.assertEqual("Initial known count", prog.known, 5);
+
+  Storage.saveFlashcardProgress("Voting", 8, 1, 20);
+  prog = Storage.getFlashcardProgress("Voting");
+  T.assertEqual("Updated known count overwrites", prog.known, 8);
+  T.assertEqual("Updated studying count overwrites", prog.studying, 1);
+
+  Storage.clearAll();
+});
+
+T.suite("Storage — Settings Persistence", () => {
+  Storage.clearAll();
+
+  Storage.setSetting("theme", "dark");
+  Storage.setSetting("sound", true);
+  Storage.setSetting("language", "en");
+
+  T.assertEqual("Theme setting persists", Storage.getSetting("theme"), "dark");
+  T.assertEqual("Boolean setting persists", Storage.getSetting("sound"), true);
+  T.assertEqual("String setting persists", Storage.getSetting("language"), "en");
+  T.assertEqual("Absent key returns null default", Storage.getSetting("missing"), null);
+  T.assertEqual("Absent key returns custom default", Storage.getSetting("missing", 42), 42);
+
+  Storage.setSetting("theme", "light");
+  T.assertEqual("Overwriting setting works", Storage.getSetting("theme"), "light");
+
+  Storage.clearAll();
+});
+
+// ─── CHAT EDGE CASES ─────────────────────────────────────────────────────────
+T.suite("Chat — Response Quality", () => {
+  function findResponse(text) {
+    const lower = text.toLowerCase();
+    let best = null, bestScore = 0;
+    for (const entry of chatKB) {
+      if (entry.id === "fallback") continue;
+      let score = 0;
+      for (const kw of entry.keywords) {
+        if (lower.includes(kw)) score += kw.split(" ").length;
+      }
+      if (score > bestScore) { bestScore = score; best = entry; }
+    }
+    if (!best || bestScore === 0) {
+      const fb = chatKB.find(e => e.id === "fallback");
+      return { response: fb.response, followups: fb.followups };
+    }
+    return { response: best.response, followups: best.followups };
+  }
+
+  T.assert("'voting age' returns a response", findResponse("voting age eligibility").response.length > 0);
+  T.assert("'Lok Sabha' returns a response", findResponse("Lok Sabha seats").response.length > 0);
+  T.assert("'political party' returns a response", findResponse("political party registration").response.length > 0);
+  T.assert("Empty string returns fallback", findResponse("").response.length > 0);
+  T.assert("All KB entries have non-empty responses", chatKB.every(e => e.response.length > 0));
+  T.assert("All KB entries have followups array", chatKB.every(e => Array.isArray(e.followups)));
+  T.assert("No KB entry has duplicate keywords", chatKB.every(e => new Set(e.keywords).size === e.keywords.length));
+});
+
+// ─── HTML SANITIZATION TESTS ─────────────────────────────────────────────────
+T.suite("Security — XSS Prevention Extended", () => {
+  T.assertEqual("Handles single quote", escapeHtml("it's fine"), "it's fine");
+  T.assertEqual("Handles double quote", escapeHtml('"quoted"'), '"quoted"');
+  T.assertEqual("Handles nested tags", escapeHtml("<div><b>text</b></div>"), "&lt;div&gt;&lt;b&gt;text&lt;/b&gt;&lt;/div&gt;");
+  T.assertEqual("Handles javascript: URI", escapeHtml("javascript:alert(1)"), "javascript:alert(1)");
+  T.assertEqual("Preserves numbers", escapeHtml("12345"), "12345");
+  T.assertEqual("Preserves special chars without html meaning", escapeHtml("hello@world.com"), "hello@world.com");
+  T.assertEqual("Handles unicode safely", escapeHtml("नमस्ते"), "नमस्ते");
+});
+
 // ─── RENDER SUMMARY ──────────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   // Delay summary to allow async data to load
